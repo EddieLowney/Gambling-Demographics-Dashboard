@@ -1,28 +1,30 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from pytz import country_names
+
+import df_loading as dfl
 
 # Load the CSV file
-df = pd.read_csv('PopTrendsBData3Aggs.csv')
-print(df)
-print(df.columns)
-print(df.info())
-df.dropna(inplace=True)
-
+gamble = dfl.load_csv('PopTrendsBData3Aggs.csv')
+codes = dfl.load_csv('countrycode.csv')
+codes = codes[['name', 'country-code']]
+gamble[country_names] = codes[name] where gamble[CountryID] == codes[country-code]
 
 
 #fig = px.bar(df, x=)
-df['Loss'] = -1*(df['StakeA'] - df['WinA'])
-print('Max Loss: ', df.Loss.min())
-print('Max Win: ', df.Loss.max())
-print('Avg Win/Loss: ', df.Loss.mean())
+gamble['Loss'] = -1*(gamble['StakeA'] - gamble['WinA'])
+print('Max Loss: ', gamble.Loss.min())
+print('Max Win: ', gamble.Loss.max())
+print('Avg Win/Loss: ', gamble.Loss.mean())
 
 # Create normalized histogram using seaborn
-sns.histplot(df,x='Loss',
+sns.histplot(gamble,x='Loss',
              bins=30,
              binrange=[-750,400],
              kde=False,
-             stat='frequency')
+             stat='frequency'
+             )
 
 plt.xlabel('Data')
 plt.ylabel('Probability Density')
