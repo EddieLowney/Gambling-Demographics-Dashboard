@@ -108,7 +108,9 @@ def select_data(cleaned_death_df, year_range):
     cleaned_death_df = cleaned_death_df.reset_index()
     global local
     local = cleaned_death_df
-    return cleaned_death_df
+
+    table = pn.widgets.Tabulator(local, selectable=False)
+    return table
 
 def get_plot(cleaned_death_df, width, height):
     global local
@@ -116,13 +118,14 @@ def get_plot(cleaned_death_df, width, height):
                          vals = "ESTIMATE", width=width, height=height)
     return fig
 
-select_df = select_data(death_df_cleaned, ["10-14 years", "All ages"])
-get_plot(select_df, 400, 800)
+# select_df = select_data(death_df_cleaned, ["10-14 years", "All ages"])
+# get_plot(select_df, 400, 800)
 
 
 
-selection = pn.bind(select_data, age_selection)
+selection = pn.bind(select_data, death_df_cleaned, age_selection)
 plot = pn.bind(get_plot, age_selection, width, height)
+
 
 card_width = 320
 
@@ -159,7 +162,7 @@ layout = pn.template.FastListTemplate(
     theme_toggle=False,
     main=[
         pn.Tabs(
-            ("plot", plot),  # Replace None with callback binding
+            ("plot", selection),  # Replace None with callback binding
             ("Tab2", plot),  # Replace None with callback binding
             active=1  # Which tab is active by default?
         )
