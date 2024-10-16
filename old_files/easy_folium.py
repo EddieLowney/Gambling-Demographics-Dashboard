@@ -1,9 +1,4 @@
-
-import gambling_stats
 from dataloading import merged_df
-import pandas as pd
-import warnings
-
 
 filtered_countries = filter_by_count(merged_df,
                                      'country_name',
@@ -71,8 +66,8 @@ def create_map(df,
         control=False,
         highlight_function=highlight_function,
         tooltip=folium.features.GeoJsonTooltip(
-            fields=['name'],  # Adjust based on your GeoJSON properties
-            aliases=[country],
+            fields=['loss'],  # Adjust based on your GeoJSON properties
+            aliases=[column],
             style=(
                 "background-color: white; color: #333333; font-family: arial;"
                 " font-size: 12px; padding: 10px;"

@@ -3,8 +3,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Load the CSV file
-gamble = pd.read_csv('Data/PopTrendsBData3Aggs.csv')
-codes = pd.read_csv('Data/countrycode.csv')
+gamble = pd.read_csv('../Data/PopTrendsBData3Aggs.csv')
+codes = pd.read_csv('../Data/countrycode.csv')
 codes = codes[['name', 'country-code']]
 
 

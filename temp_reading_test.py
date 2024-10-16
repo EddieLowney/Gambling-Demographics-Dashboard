@@ -1,9 +1,11 @@
 import panel as pn
 import pandas as pd
 from gambling_demographics_api import GAMBLING_DEMOGRAPHICS_API
-import sankey as sk
 import folium
 import json
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 
 # Initialize Panel extension
 pn.extension()
@@ -27,15 +29,51 @@ gamble_df_cleaned = api.clean_gamble(gamble_df)
 # Widgets
 width = pn.widgets.IntSlider(name="Width", start=250, end=2000, step=250, value=1500)
 height = pn.widgets.IntSlider(name="Height", start=200, end=2500, step=100, value=800)
-threshold = pn.widgets.IntSlider(name="Country Threshold", start=1, end=100, step=1, value=10)
-age_selection = pn.widgets.MultiSelect(name="Age Selection", value=["All ages"],
-                                       options=api.get_unique_age_groups(death_df_cleaned))
+threshold = pn.widgets.IntSlider(name="Count Threshold", start=1, end=1000, step=1, value=100)
+age_selection = pn.widgets.MultiSelect(name="Age Selection",
+                                       value=["All ages"],
+                                       options=api.get_unique_age_groups(death_df_cleaned)
+                                       )
+category_selection_violin = pn.widgets.Select(name="Category to Group By",
+                                              value='country_name',
+                                              options=['Gender', 'country_name', 'BirthYear']
+                                              )
+data_selection_violin = pn.widgets.Select(name="Data to Aggregate",
+                                          value='loss',
+                                          options=['loss', 'StakeA', 'WinA', 'BetsA', 'DaysA']
+                                          )
 
+
+def create_violin(df, category, data, threshold):
+    threshold_count = api.filter_by_count(df, category, threshold)
+    normal_data = api.remove_outliers(threshold_count, data)
+    fig, ax = plt.subplots()
+    sns.violinplot(data=normal_data,
+                   x=category,
+                   y=data,
+                   hue=category,
+                   legend='auto',
+                   ax=ax)
+    plt.title('Violin Plot of Normalized Data Distribution per Category')
+    plt.xticks(rotation=38)  # Display the plot
+    return fig
 
 # Folium map generation function
 def create_map(df, country, column, starting_spot, starting_zoom, geo_json_file, title, legend_name):
     with open(geo_json_file, 'r') as f:
         geo_data = json.load(f)
+
+        # Copying dataframe
+        df_avg_loss = df[[country, column]].copy()
+
+        # Converting to a dictionary
+        avg_loss_dict = df_avg_loss.set_index(country)[column].to_dict()
+
+        # Merging average loss and geojson, used ChatGPT for help
+        for feature in geo_data['features']:
+            country_id = feature['id']
+            avg_win = avg_loss_dict.get(country_id, None)
+            feature['properties']['average_winnings'] = avg_win
 
     # Create Folium map
     m = folium.Map(location=starting_spot, zoom_start=starting_zoom)
@@ -46,14 +84,36 @@ def create_map(df, country, column, starting_spot, starting_zoom, geo_json_file,
         name=title,
         data=df,
         columns=[country, column],
-        key_on='feature.properties.name',
+        key_on='feature.id',
         fill_color='Spectral',
         fill_opacity=0.7,
         line_opacity=0.5,
         legend_name=legend_name
     ).add_to(m)
 
+    # Create style_function
+    style_function = lambda x: {
+        'fillColor': '#ffffff',
+        'color': '#000000',
+        'fillOpacity': 0.2,
+        'weight': 0.2
+    }
+
+    # Create popup tooltip object, used this source for help: https://medium.com/geekculture/three-ways-to-plot-choropleth-map-using-python-f53799a3e623
+    tooltip = folium.features.GeoJson(
+        geo_data,
+        style_function=style_function,
+        control=False,
+        tooltip=folium.features.GeoJsonTooltip(
+            fields=['name', 'average_winnings'],
+            )
+        )
+
+    # Add tooltip object to the map
+    m.add_child(tooltip)
+    m.keep_in_front(tooltip)
     folium.LayerControl().add_to(m)
+
     return m
 
 
@@ -66,14 +126,26 @@ def filter_by_count(df, column_to_count, threshold):
     filtered = pd.merge(dropped, df, on=column_to_count, how='inner')
 
     # Generate the Folium map
-    folium_map = create_map(filtered, 'country_name', 'loss',
-                            [54.52, 15.25], 1,
+    folium_map = create_map(filtered, 'alpha-3', 'loss',
+                            [54.52, 15.25], 3,
                             'countries.geo.json', 'Gambling Losses', 'Loss per Country')
 
     # Render the map as an HTML pane
     map_pane = pn.pane.HTML(folium_map._repr_html_(), height=height.value, sizing_mode='stretch_both')
     return map_pane
 
+# Function to make the violin plots
+def init_violin(df, category, data, threshold):
+    fig = create_violin(df, category, data, threshold)
+    map_pane = pn.pane.Matplotlib(fig)
+    return map_pane
+
+# Bind the violin plot category, data, and threshold function to widgets
+change_violin = pn.bind(init_violin,
+                        df=gamble_df_cleaned,
+                        category = category_selection_violin,
+                        data = data_selection_violin,
+                        threshold = threshold)
 
 # Bind the Folium filtering function to Panel widgets
 filter_folium = pn.bind(filter_by_count, gamble_df_cleaned, COLUMN_TO_COUNT, threshold)
@@ -90,21 +162,27 @@ search_card = pn.Card(
 # Plot card (for other plot or threshold controls)
 plot_card = pn.Card(
     pn.Column(threshold),
-    title="Plot", width=card_width, collapsed=True
+    title="Threshold", width=card_width, collapsed=True
+)
+# Category card
+category_card = pn.Card(
+    pn.Column(data_selection_violin, category_selection_violin),
+    title="Violin Options", width=card_width, collapsed=True
 )
 
 # Panel dashboard layout with FastListTemplate
 layout = pn.template.FastListTemplate(
-    title="Dashboard Title Goes Here",
+    title="BWin International Online Gambling Data Analysis",
     sidebar=[
-        search_card,
+        #search_card,
         plot_card,
+        category_card
     ],
     theme_toggle=False,
     main=[
         pn.Tabs(
             ("Folium Map", filter_folium),
-            ("Tab2", pn.pane.Markdown("Other content here"))
+            ("Violin Plot", change_violin)
         )
     ],
     header_background='#a93226'

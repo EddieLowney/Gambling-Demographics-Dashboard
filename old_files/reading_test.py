@@ -32,8 +32,8 @@ pn.extension()
 # DASHBOARD WIDGET CONTAINERS ("CARDS")
 DEATH_FILENAME = "Data/Death_rates_for_suicide__by_sex__race__Hispanic_origin\
 __and_age__United_States.csv"
-MENTAL_FILENAME = "Data/Mental_Health_Care_in_the_Last_4_Weeks.csv"
-GAMBLE_FILENAME = 'Data/PopTrendsBData3Aggs.csv'
+MENTAL_FILENAME = "../Data/Mental_Health_Care_in_the_Last_4_Weeks.csv"
+GAMBLE_FILENAME = '../Data/PopTrendsBData3Aggs.csv'
 
 COLUMN_TO_COUNT = "country_name"
 
@@ -88,8 +88,8 @@ def filter_by_count(df, column_to_count, threshold):
                             'country_name',
                             'loss',
                             [54.52, 15.25],
-                            1,
-                            'countries.geo.json',
+                            5,
+                            '../countries.geo.json',
                             'title',
                             'legend_name')
     return folium_map

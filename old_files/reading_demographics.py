@@ -14,7 +14,7 @@ import sankey as sk
 
 DEATH_FILENAME = "Data/Death_rates_for_suicide__by_sex__race__Hispanic_origin\
 __and_age__United_States.csv"
-MENTAL_FILENAME = "Data/Mental_Health_Care_in_the_Last_4_Weeks.csv"
+MENTAL_FILENAME = "../Data/Mental_Health_Care_in_the_Last_4_Weeks.csv"
 CARD_WIDTH = 400
 pn.extension()
 

@@ -1,5 +1,10 @@
 import gambling_stats
 import pandas as pd
+import warnings
+
+# Suppressing Unwanted warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=pd.errors.SettingWithCopyWarning)
 
 def unique_dataframe_mapping(df, src, targ, labels):
     # Maps the label names from a dataframe into unique numbers for sankey targets and sources
@@ -119,6 +124,17 @@ def bin_loss(df, loss_column, n_bins):
     df['loss_bins'] = bins.cat.rename_categories(bin_labels)
     return df
 
+def bin_loss(df, loss_column, n_bins):
+    bins = pd.cut(df[loss_column], bins=n_bins)
+
+    # Bin lables that include loss
+    bin_edges = bins.cat.categories
+    bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}" for interval in bin_edges]
+
+    # Assign the bin labels to the bins
+    df['loss_bins'] = bins.cat.rename_categories(bin_labels)
+    return df
+
 def remove_outliers(df, column):
     # Q1 and Q3
     Q1 = df[column].quantile(0.25)
@@ -135,4 +151,4 @@ def remove_outliers(df, column):
     return filtered_df
 df = remove_outliers(gambling_stats.merged_df, 'loss')
 df = bin_loss(df, 'loss', 5)
-fig =make_sankey(df, 400, "Sankey", 'BirthYear', 'loss_bins')
+fig = make_sankey(df, 400, "Sankey", 'BirthYear', 'loss_bins')
