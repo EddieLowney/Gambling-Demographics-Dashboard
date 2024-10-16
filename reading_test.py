@@ -124,53 +124,12 @@ def create_map(df,
         legend_name=legend_name
     ).add_to(m)
 
-    # Create style_function
-    style_function = lambda x: {
-        'fillColor': '#ffffff',
-        'color': '#000000',
-        'fillOpacity': 0.1,
-        'weight': 0.1
-    }
 
-    # Create highlight_function
-    highlight_function = lambda x: {
-        'fillColor': '#000000',
-        'color': '#000000',
-        'fillOpacity': 0.50,
-        'weight': 0.1
-    }
 
-    # Create popup tooltip object
-    tooltip = folium.features.GeoJson(
-        geo_data,
-        style_function=style_function,
-        control=False,
-        highlight_function=highlight_function,
-        tooltip=folium.features.GeoJsonTooltip(
-            fields=['name'],  # Adjust based on your GeoJSON properties
-            aliases=[country],
-            style=(
-                "background-color: white; color: #333333; font-family: arial;"
-                " font-size: 12px; padding: 10px;"
-            )
-        )
-    )
-
-    # Add tooltip object to the map
-    m.add_child(tooltip)
-    m.keep_in_front(tooltip)
-    folium.LayerControl().add_to(m)
 
     return m
 
-# folium_map = create_map(gamble_df_cleaned,
-#         'country_name',
-#         'loss',
-#         [54.52, 15.25],
-#         1,
-#         'countries.geo.json',
-#         'title',
-#         'legend_name')
+
 
 
 selection = pn.bind(select_data, death_df_cleaned, age_selection)
