@@ -1,67 +1,11 @@
 import panel as pn
+import pandas as pd
 from gambling_demographics_api import GAMBLING_DEMOGRAPHICS_API
 import sankey as sk
-#
-#
-# DEATH_FILENAME = "Data/Death_rates_for_suicide__by_sex__race__Hispanic_origin\
-# __and_age__United_States.csv"
-#
-# pn.extension()
-#
-# api = GAMBLING_DEMOGRAPHICS_API()
-# api.load_data(DEATH_FILENAME)
-#
-# width = pn.widgets.IntSlider(name="Width", start=250, end=2000, step=250, value=1500)
-# height = pn.widgets.IntSlider(name="Height", start=200, end=2500, step=100, value=800)
-#
-#
-# def load_cleaned_deaths():
-#     global local
-#     local = api.load_data(DEATH_FILENAME)
-#     local = api.clean_death(local)
-#     return local
-#
-# def get_plot(width, height):
-#     global local
-#     fig = sk.make_sankey(local, width=width, height=height)
-#     return fig
-#
-# plot = pn.bind(get_plot, width, height)
-#
-# card_width = 320
-#
-# plot_card = pn.Card(
-#     pn.Column(
-#         width,
-#         height
-#     ),
-#
-#     title="Plot", width=card_width, collapsed=True
-# )
-#
-#
-# # LAYOUT
-#
-# layout = pn.template.FastListTemplate(
-#     title="GAD Explorer",
-#     sidebar=[
-#         plot_card,
-#     ],
-#     theme_toggle=False,
-#     main=[
-#         pn.Tabs(
-#             # ("Sankey", None)
-#             ("Sankey Mess", plot)
-#         )
-#     ],
-#     header_background='#a93226'
-#
-# ).servable()
-#
-# layout.show()
-
-
 import panel as pn
+
+import folium
+import json
 
 
 # Loads javascript dependencies and configures Panel (required)
@@ -89,6 +33,9 @@ pn.extension()
 DEATH_FILENAME = "Data/Death_rates_for_suicide__by_sex__race__Hispanic_origin\
 __and_age__United_States.csv"
 MENTAL_FILENAME = "Data/Mental_Health_Care_in_the_Last_4_Weeks.csv"
+GAMBLE_FILENAME = 'Data/PopTrendsBData3Aggs.csv'
+
+COLUMN_TO_COUNT = "country_name"
 
 api = GAMBLING_DEMOGRAPHICS_API()
 
@@ -98,8 +45,14 @@ mental_df = api.load_data(MENTAL_FILENAME)
 
 death_df_cleaned = api.clean_death(death_df)
 
+gamble_df = api.load_data(GAMBLE_FILENAME)
+gamble_df_cleaned = api.clean_gamble(gamble_df)
+
+
 width = pn.widgets.IntSlider(name="Width", start=250, end=2000, step=250, value=1500)
 height = pn.widgets.IntSlider(name="Height", start=200, end=2500, step=100, value=800)
+threshold = pn.widgets.IntSlider(name="Country Threshold", start = 1, end = 1000, step = 10, value = 10)
+
 age_selection = pn.widgets.MultiSelect(name="Age Selection", value=["All ages"],
     options=api.get_unique_age_groups(death_df_cleaned))
 
@@ -118,13 +71,113 @@ def get_plot(cleaned_death_df, width, height):
                          vals = "ESTIMATE", width=width, height=height)
     return fig
 
+
 # select_df = select_data(death_df_cleaned, ["10-14 years", "All ages"])
 # get_plot(select_df, 400, 800)
 
 
+def filter_by_count(df, column_to_count, threshold):
+    """ Filters out groups that don't meet a threshold """
+    count_by_column = df.groupby(column_to_count).size().reset_index()
+    count_by_column.columns = [column_to_count, 'count']
+    dropped = (count_by_column[count_by_column['count'] >= threshold][column_to_count]
+               .reset_index(drop=True))
+    filtered = pd.merge(dropped, df, on=column_to_count, how='inner')
+
+    folium_map = create_map(filtered,
+                            'country_name',
+                            'loss',
+                            [54.52, 15.25],
+                            1,
+                            'countries.geo.json',
+                            'title',
+                            'legend_name')
+    return folium_map
+
+def create_map(df,
+               country,
+               column,
+               starting_spot,
+               starting_zoom,
+               geo_json_file,
+               title,
+               legend_name):
+
+    # Load the GeoJSON data
+    with open(geo_json_file, 'r') as f:
+        geo_data = json.load(f)
+
+    # Initialize the folium map
+    m = folium.Map(location=starting_spot,
+                   zoom_start=starting_zoom)
+
+    # Make a choropleth
+    folium.Choropleth(
+        geo_data=geo_data,
+        name=title,
+        data=df,
+        columns=[country, column],  # Assign columns in the dataset for plotting
+        key_on='feature.properties.name',  # Adjust based on your GeoJSON file
+        fill_color='Spectral',
+        fill_opacity=0.7,
+        line_opacity=0.5,
+        legend_name=legend_name
+    ).add_to(m)
+
+    # Create style_function
+    style_function = lambda x: {
+        'fillColor': '#ffffff',
+        'color': '#000000',
+        'fillOpacity': 0.1,
+        'weight': 0.1
+    }
+
+    # Create highlight_function
+    highlight_function = lambda x: {
+        'fillColor': '#000000',
+        'color': '#000000',
+        'fillOpacity': 0.50,
+        'weight': 0.1
+    }
+
+    # Create popup tooltip object
+    tooltip = folium.features.GeoJson(
+        geo_data,
+        style_function=style_function,
+        control=False,
+        highlight_function=highlight_function,
+        tooltip=folium.features.GeoJsonTooltip(
+            fields=['name'],  # Adjust based on your GeoJSON properties
+            aliases=[country],
+            style=(
+                "background-color: white; color: #333333; font-family: arial;"
+                " font-size: 12px; padding: 10px;"
+            )
+        )
+    )
+
+    # Add tooltip object to the map
+    m.add_child(tooltip)
+    m.keep_in_front(tooltip)
+    folium.LayerControl().add_to(m)
+
+    return m
+
+# folium_map = create_map(gamble_df_cleaned,
+#         'country_name',
+#         'loss',
+#         [54.52, 15.25],
+#         1,
+#         'countries.geo.json',
+#         'title',
+#         'legend_name')
+
 
 selection = pn.bind(select_data, death_df_cleaned, age_selection)
 plot = pn.bind(get_plot, age_selection, width, height)
+filter_folium = pn.bind(filter_by_count, gamble_df_cleaned, COLUMN_TO_COUNT,
+                        threshold)
+
 
 
 card_width = 320
@@ -142,7 +195,7 @@ search_card = pn.Card(
 
 plot_card = pn.Card(
     pn.Column(
-        # Widget 1
+        threshold
         # Widget 2
         # Widget 3
     ),
@@ -162,9 +215,10 @@ layout = pn.template.FastListTemplate(
     theme_toggle=False,
     main=[
         pn.Tabs(
-            ("plot", selection),  # Replace None with callback binding
-            ("Tab2", plot),  # Replace None with callback binding
-            active=1  # Which tab is active by default?
+            ("plot", selection),
+            ("Tab2", plot),
+            ("folium", filter_folium),
+            active=1
         )
 
     ],
