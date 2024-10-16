@@ -21,7 +21,7 @@ class GAMBLING_DEMOGRAPHICS_API:
 
     def load_data(self, filename):
         self.demographics = pd.read_csv(filename)
-        print(self.demographics)
+        # print(self.demographics)
         return self.demographics
 
     def clean_mental(self):
@@ -48,6 +48,10 @@ class GAMBLING_DEMOGRAPHICS_API:
         unique_age_groups = df["AGE"].unique()
         return list(unique_age_groups)
 
+def select_data(cleaned_death_df, year_range):
+    cleaned_death_df = cleaned_death_df.loc[cleaned_death_df["AGE"].isin(year_range)]
+    cleaned_death_df = cleaned_death_df.reset_index()
+    return cleaned_death_df
 def main():
 
     demographics_api = GAMBLING_DEMOGRAPHICS_API()
@@ -56,12 +60,19 @@ def main():
     mental_df = demographics_api.load_data(MENTAL_FILENAME)
 
     cleaned_death_df = demographics_api.clean_death(death_df)
-    cleaned_mental_df = demographics_api.clean_mental(mental_df)
+    cleaned_mental_df = demographics_api.clean_mental()
+
+    selected_year_deaths = select_data(cleaned_death_df, ["10-14 years", "All ages"])
+    print(selected_year_deaths)
+
+
+
+
 
     year = 1950
     age = "All ages"
-    sk.make_sankey(cleaned_death_df, "STUB_NAME", "AGE", vals = "ESTIMATE")
-    print(demographics_api.get_estimate(cleaned_death_df, year, age))
+    # sk.make_sankey(cleaned_death_df, "STUB_NAME", "AGE", vals = "ESTIMATE", width = 10, height = 10)
+    # print(demographics_api.get_estimate(cleaned_death_df, year, age))
 
 
 if __name__ == "__main__":
