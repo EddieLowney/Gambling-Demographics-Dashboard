@@ -37,4 +37,4 @@ loss_by_birthdecade = (merged_df.groupby('BirthYear')['loss']
                    .mean()
                    .reset_index()
                    .sort_values('loss', ascending=True))
-#print(loss_by_birthdecade.describe())
+
