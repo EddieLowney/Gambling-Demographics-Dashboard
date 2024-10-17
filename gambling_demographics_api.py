@@ -46,12 +46,13 @@ class GAMBLING_DEMOGRAPHICS_API:
         # Renaming columns to match gamble
         codes.columns = ['country_name', 'alpha-3', 'CountryID']
         # Merging on CountryID
-        merged_df = pd.merge(codes, gamble, on='CountryID', how='inner').dropna(how='any')
+        merged_df = pd.merge(
+            codes, gamble, on='CountryID', how='inner').dropna(how='any')
         # Adding loss column to merged
         merged_df['loss'] = -1 * (merged_df['StakeA'] - merged_df['WinA'])
         # Changing birth year to birth decade, aggregating by decade and averaging loss
-        merged_df['BirthYear'][merged_df['BirthYear'] % 10 != 0] = merged_df['BirthYear'] - (
-                    merged_df['BirthYear'] % 10)
+        merged_df['BirthYear'][merged_df['BirthYear'] % 10 != 0] = merged_df[
+                                    'BirthYear'] - (merged_df['BirthYear'] % 10)
         merged_df = merged_df.replace({'Gender': {0: 'Female', 1: 'Male'}})
         return merged_df
 
@@ -59,8 +60,8 @@ class GAMBLING_DEMOGRAPHICS_API:
         """ Filters out groups that don't meet a threshold """
         count_by_column = df.groupby(column_to_count).size().reset_index()
         count_by_column.columns = [column_to_count, 'count']
-        dropped = (count_by_column[count_by_column['count'] >= threshold][column_to_count]
-                   .reset_index(drop=True))
+        dropped = (count_by_column[count_by_column['count'] >= threshold][
+                       column_to_count].reset_index(drop=True))
         filtered = pd.merge(dropped, df, on=column_to_count, how='inner')
         return filtered
 
@@ -105,7 +106,8 @@ class GAMBLING_DEMOGRAPHICS_API:
         upper_bound = Q3 + 1.5 * IQR
 
         # Filter out outliers
-        filtered_df = df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
+        filtered_df = df[
+            (df[column] >= lower_bound) & (df[column] <= upper_bound)]
 
         return filtered_df
 
@@ -114,14 +116,16 @@ class GAMBLING_DEMOGRAPHICS_API:
 
         # Bin lables that include loss
         bin_edges = bins.cat.categories
-        bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}" for interval in bin_edges]
+        bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}"
+                      for interval in bin_edges]
 
         # Assign the bin labels to the bins
         df['loss_bins'] = bins.cat.rename_categories(bin_labels)
         return df
 
 def select_data(cleaned_death_df, year_range):
-    cleaned_death_df = cleaned_death_df.loc[cleaned_death_df["AGE"].isin(year_range)]
+    cleaned_death_df = cleaned_death_df.loc[cleaned_death_df["AGE"].isin(
+                                                                year_range)]
     cleaned_death_df = cleaned_death_df.reset_index()
     return cleaned_death_df
 
@@ -139,13 +143,17 @@ def main():
 
     normalized_df = demographics_api.remove_outliers(cleaned_gamble_df, 'loss')
     sankey_df = demographics_api.bin(normalized_df,'loss', 10)
-    threshold_gamble_count = demographics_api.filter_by_count(cleaned_gamble_df, "country_name", 1000)
-    selected_year_deaths = select_data(cleaned_death_df, ["10-14 years", "All ages"])
+    threshold_gamble_count = demographics_api.filter_by_count(cleaned_gamble_df,
+                                                        "country_name", 1000)
+    selected_year_deaths = select_data(cleaned_death_df, ["10-14 years",
+                                                          "All ages"])
 
 
 
-    agg_avg_gender = demographics_api.group_by_max(cleaned_gamble_df, "Gender", 'loss')
-    agg_avg_gamble = demographics_api.group_by_avg(threshold_gamble_count, 'country_name', 'loss')
+    agg_avg_gender = demographics_api.group_by_avg(cleaned_gamble_df,
+                                                   "Gender", 'loss')
+    agg_avg_gamble = demographics_api.group_by_avg(threshold_gamble_count,
+                                                   'country_name', 'loss')
 
     print(cleaned_gamble_df.info())
 if __name__ == "__main__":

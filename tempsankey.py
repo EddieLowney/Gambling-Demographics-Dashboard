@@ -1,13 +1,21 @@
+
+
 import gambling_stats
 import pandas as pd
 import warnings
+
+import plotly.graph_objects as go
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
+
 
 # Suppressing Unwanted warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=pd.errors.SettingWithCopyWarning)
 
 def unique_dataframe_mapping(df, src, targ, labels):
-    # Maps the label names from a dataframe into unique numbers for sankey targets and sources
+    # Maps the label names from a dataframe into unique numbers for sankey
+    # targets and sources
     import pandas as pd
 
     # makes dataframe of unique targets and values
@@ -28,17 +36,14 @@ def unique_dataframe_mapping(df, src, targ, labels):
 
 def make_sankey(df,threshold, title, *cols):
     # Makes an n-level sankey diagram with n columns
-
-    import plotly.graph_objects as go
-    import matplotlib.cm as cm
-    import matplotlib.colors as mcolors
-
-    # Initializing lists to store dataframes and unique labels for each iteration through columns
+    # Initializing lists to store dataframes and unique labels for each
+    # iteration through columns
     df_list = []
     labels = []
 
 
-    # Iterates through the provided columns and makes a unique dataframe for each one
+    # Iterates through the provided columns and makes a unique dataframe for
+    # each one
     for i in range(len(cols)-1):
 
         src = cols[i]
@@ -60,14 +65,14 @@ def make_sankey(df,threshold, title, *cols):
     df = pd.concat(df_list)
 
     # Normalize the values to create a color map
-    norm = mcolors.Normalize(vmin=min(df['Count']), vmax=max(df['Count']))
+    norm = mcolors.Normalize(vmin=df['Count'].min(), vmax=df['Count'].max())
     cmap = cm.get_cmap('viridis')  # Use viridis color map
     link_colors = [mcolors.to_rgba(cmap(norm(val))) for val in df['Count']]
 
     # Using plotly graph objects to make the sankey
     fig = go.Figure(data=[go.Sankey(
         valueformat=".0f",
-        valuesuffix="Artists", # The count of artists is the value
+        valuesuffix=" Users", # The count of artists is the value
         # Define nodes
         node=dict(
             pad=15,
@@ -92,7 +97,8 @@ def make_sankey(df,threshold, title, *cols):
     return fig
 
 def keep_rows(df, column, operator, comparison):
-    # Function for cleaning dataframes, removing specified rows that are related by the operator
+    # Function for cleaning dataframes, removing specified rows that
+    # are related by the operator
         if operator == '==':
             # Keeps rows equal to
             df = df[df[column] == comparison]
@@ -118,7 +124,8 @@ def bin_loss(df, loss_column, n_bins):
 
     # Bin lables that include loss
     bin_edges = bins.cat.categories
-    bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}" for interval in bin_edges]
+    bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}"
+                  for interval in bin_edges]
 
     # Assign the bin labels to the bins
     df['loss_bins'] = bins.cat.rename_categories(bin_labels)
@@ -129,7 +136,8 @@ def bin_loss(df, loss_column, n_bins):
 
     # Bin lables that include loss
     bin_edges = bins.cat.categories
-    bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}" for interval in bin_edges]
+    bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}"
+                  for interval in bin_edges]
 
     # Assign the bin labels to the bins
     df['loss_bins'] = bins.cat.rename_categories(bin_labels)

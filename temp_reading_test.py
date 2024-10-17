@@ -28,27 +28,29 @@ gamble_df = api.load_data(GAMBLE_FILENAME)
 gamble_df_cleaned = api.clean_gamble(gamble_df)
 
 # Widgets
-width = pn.widgets.IntSlider(name="Width", start=250, end=2000, step=250, value=1500)
-height = pn.widgets.IntSlider(name="Height", start=200, end=2500, step=100, value=800)
-threshold = pn.widgets.IntSlider(name="Count Threshold", start=1, end=1000, step=1, value=100)
-n_bins = pn.widgets.IntSlider(name="Number of Bins", start=1, end=50, step=1, value=5)
+width = pn.widgets.IntSlider(name="Width", start=250, end=2000, step=250,
+                             value=1500)
+height = pn.widgets.IntSlider(name="Height", start=200, end=2500, step=100,
+                              value=800)
+threshold = pn.widgets.IntSlider(name="Minimum Data Points Threshold",
+                                 start=1, end=1000, step=1, value=100)
+n_bins = pn.widgets.IntSlider(name="Number of Bins", start=1, end=50, step=1,
+                              value=5)
 age_selection = pn.widgets.MultiSelect(name="Age Selection",
-                                       value=["All ages"],
-                                       options=api.get_unique_age_groups(death_df_cleaned)
-                                       )
+        value=["All ages"],options=api.get_unique_age_groups(death_df_cleaned)
+                                      )
 category_selection_violin = pn.widgets.Select(name="Category to Group By",
-                                              value='country_name',
-                                              options=['Gender', 'country_name', 'BirthYear']
+        value='country_name', options=['Gender', 'country_name', 'BirthYear']
                                               )
 data_selection_violin = pn.widgets.Select(name="Data to Aggregate",
-                                          value='loss',
-                                          options=['loss', 'StakeA', 'WinA', 'BetsA', 'DaysA']
+            value='loss', options=['loss', 'StakeA', 'WinA', 'BetsA', 'DaysA']
                                           )
 
 def create_sankey(category, data, threshold, n_bins):
     outliers_removed_df = api.remove_outliers(gamble_df_cleaned, data)
     presankey_df = api.bin(outliers_removed_df, data, n_bins)
-    fig = make_sankey(presankey_df , threshold, "Sankey Diagram of Category and Data", category, data)
+    fig = make_sankey(presankey_df , threshold,
+                      "Sankey Diagram of Category and Data", category, data)
     sank_pane = pn.pane.Plotly(fig)
     return sank_pane
 
@@ -67,7 +69,8 @@ def create_violin(df, category, data, threshold):
     return fig
 
 # Folium map generation function
-def create_map(df, country, column, starting_spot, starting_zoom, geo_json_file, title, legend_name):
+def create_map(df, country, column, starting_spot, starting_zoom,
+               geo_json_file, title, legend_name):
     with open(geo_json_file, 'r') as f:
         geo_data = json.load(f)
 
@@ -107,7 +110,9 @@ def create_map(df, country, column, starting_spot, starting_zoom, geo_json_file,
         'weight': 0.2
     }
 
-    # Create popup tooltip object, used this source for help: https://medium.com/geekculture/three-ways-to-plot-choropleth-map-using-python-f53799a3e623
+    # Create popup tooltip object, used this source for help:
+    # https://medium.com/geekculture/three-ways-to-plot-choropleth-map-using-python-f53799a3e623
+
     tooltip = folium.features.GeoJson(
         geo_data,
         style_function=style_function,
@@ -129,17 +134,19 @@ def create_map(df, country, column, starting_spot, starting_zoom, geo_json_file,
 def filter_by_count(df, column_to_count, threshold):
     count_by_column = df.groupby(column_to_count).size().reset_index()
     count_by_column.columns = [column_to_count, 'count']
-    dropped = (count_by_column[count_by_column['count'] >= threshold][column_to_count]
+    dropped = (count_by_column[
+                   count_by_column['count'] >= threshold][column_to_count]
                .reset_index(drop=True))
     filtered = pd.merge(dropped, df, on=column_to_count, how='inner')
 
     # Generate the Folium map
     folium_map = create_map(filtered, 'alpha-3', 'loss',
                             [54.52, 15.25], 3,
-                            'countries.geo.json', 'Gambling Losses', 'Loss per Country')
+                    'countries.geo.json', 'Gambling Losses', 'Loss per Country')
 
     # Render the map as an HTML pane
-    map_pane = pn.pane.HTML(folium_map._repr_html_(), height=height.value, sizing_mode='stretch_both')
+    map_pane = pn.pane.HTML(folium_map._repr_html_(), height=height.value,
+                            sizing_mode='stretch_both')
     return map_pane
 
 # Function to make the violin plots
