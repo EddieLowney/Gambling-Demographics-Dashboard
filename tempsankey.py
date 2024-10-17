@@ -136,7 +136,7 @@ def bin_loss(df, loss_column, n_bins):
 
     # Bin lables that include loss
     bin_edges = bins.cat.categories
-    bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}"
+    bin_labels = [f"{int(interval.left):,} - {int(interval.right):,}"
                   for interval in bin_edges]
 
     # Assign the bin labels to the bins

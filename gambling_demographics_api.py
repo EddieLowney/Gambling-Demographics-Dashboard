@@ -1,5 +1,5 @@
 '''
-Author: Eddie Lowney
+Authors: Eddie Lowney, Nick Usich
 Section: Advanced Programming with Data Section 1
 Assignment:
 Date:
@@ -90,10 +90,7 @@ class GAMBLING_DEMOGRAPHICS_API:
         unique_age_groups = df["AGE"].unique()
         return list(unique_age_groups)
 
-    def normalize_robust(self, df, column):
-        scaler = RobustScaler()
-        df[column + '_normalized'] = scaler.fit_transform(df[[column]])
-        return df
+
 
     def remove_outliers(self, df, column):
         # Q1 and Q3

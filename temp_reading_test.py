@@ -34,7 +34,7 @@ height = pn.widgets.IntSlider(name="Height", start=200, end=2500, step=100,
                               value=800)
 threshold = pn.widgets.IntSlider(name="Minimum Data Points Threshold",
                                  start=1, end=1000, step=1, value=100)
-n_bins = pn.widgets.IntSlider(name="Number of Bins", start=1, end=50, step=1,
+n_bins_slider = pn.widgets.IntSlider(name="Number of Bins", start=1, end=50, step=1,
                               value=5)
 age_selection = pn.widgets.MultiSelect(name="Age Selection",
         value=["All ages"],options=api.get_unique_age_groups(death_df_cleaned)
@@ -50,7 +50,7 @@ def create_sankey(category, data, threshold, n_bins):
     outliers_removed_df = api.remove_outliers(gamble_df_cleaned, data)
     presankey_df = api.bin(outliers_removed_df, data, n_bins)
     fig = make_sankey(presankey_df , threshold,
-                      "Sankey Diagram of Category and Data", category, data)
+                      "Sankey Diagram of Category and Data", category, 'loss_bins')
     sank_pane = pn.pane.Plotly(fig)
     return sank_pane
 
@@ -175,7 +175,7 @@ change_sankey = pn.bind(create_sankey,
                         category = category_selection_violin,
                         data = data_selection_violin,
                         threshold = threshold,
-                        n_bins = n_bins
+                        n_bins = n_bins_slider
                         )
 
 # Card width
@@ -189,7 +189,7 @@ search_card = pn.Card(
 
 # Plot card (for other plot or threshold controls)
 plot_card = pn.Card(
-    pn.Column(threshold),
+    pn.Column(threshold, n_bins_slider),
     title="Threshold and Number of Bins", width=card_width, collapsed=True
 )
 # Category card
