@@ -5,6 +5,7 @@ import folium
 import json
 import seaborn as sns
 import matplotlib.pyplot as plt
+from tempsankey import keep_rows, unique_dataframe_mapping, make_sankey
 
 
 # Initialize Panel extension
@@ -30,6 +31,7 @@ gamble_df_cleaned = api.clean_gamble(gamble_df)
 width = pn.widgets.IntSlider(name="Width", start=250, end=2000, step=250, value=1500)
 height = pn.widgets.IntSlider(name="Height", start=200, end=2500, step=100, value=800)
 threshold = pn.widgets.IntSlider(name="Count Threshold", start=1, end=1000, step=1, value=100)
+n_bins = pn.widgets.IntSlider(name="Number of Bins", start=1, end=50, step=1, value=5)
 age_selection = pn.widgets.MultiSelect(name="Age Selection",
                                        value=["All ages"],
                                        options=api.get_unique_age_groups(death_df_cleaned)
@@ -43,6 +45,12 @@ data_selection_violin = pn.widgets.Select(name="Data to Aggregate",
                                           options=['loss', 'StakeA', 'WinA', 'BetsA', 'DaysA']
                                           )
 
+def create_sankey(category, data, threshold, n_bins):
+    outliers_removed_df = api.remove_outliers(gamble_df_cleaned, data)
+    presankey_df = api.bin(outliers_removed_df, data, n_bins)
+    fig = make_sankey(presankey_df , threshold, "Sankey Diagram of Category and Data", category, data)
+    sank_pane = pn.pane.Plotly(fig)
+    return sank_pane
 
 def create_violin(df, category, data, threshold):
     threshold_count = api.filter_by_count(df, category, threshold)
@@ -145,10 +153,23 @@ change_violin = pn.bind(init_violin,
                         df=gamble_df_cleaned,
                         category = category_selection_violin,
                         data = data_selection_violin,
-                        threshold = threshold)
+                        threshold = threshold
+                        )
 
 # Bind the Folium filtering function to Panel widgets
-filter_folium = pn.bind(filter_by_count, gamble_df_cleaned, COLUMN_TO_COUNT, threshold)
+filter_folium = pn.bind(filter_by_count,
+                        gamble_df_cleaned,
+                        COLUMN_TO_COUNT,
+                        threshold
+                        )
+
+# Bind the sankey filtering function to Panel widgets
+change_sankey = pn.bind(create_sankey,
+                        category = category_selection_violin,
+                        data = data_selection_violin,
+                        threshold = threshold,
+                        n_bins = n_bins
+                        )
 
 # Card width
 card_width = 320
@@ -162,7 +183,7 @@ search_card = pn.Card(
 # Plot card (for other plot or threshold controls)
 plot_card = pn.Card(
     pn.Column(threshold),
-    title="Threshold", width=card_width, collapsed=True
+    title="Threshold and Number of Bins", width=card_width, collapsed=True
 )
 # Category card
 category_card = pn.Card(
@@ -182,7 +203,8 @@ layout = pn.template.FastListTemplate(
     main=[
         pn.Tabs(
             ("Folium Map", filter_folium),
-            ("Violin Plot", change_violin)
+            ("Violin Plot", change_violin),
+            ("Sankey Diagram", change_sankey)
         )
     ],
     header_background='#a93226'

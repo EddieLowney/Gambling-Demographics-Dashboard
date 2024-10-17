@@ -11,6 +11,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import warnings
+import tempsankey as sank
 
 # Suppressing Unwanted warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -70,13 +71,6 @@ class GAMBLING_DEMOGRAPHICS_API:
                       .sort_values('loss', ascending=True))
         return grouped_df
 
-    def group_by_max(self, df, column_to_group, column_to_function):
-        grouped_df = (df.groupby(column_to_group)[column_to_function]
-                      .max()
-                      .reset_index()
-                      .sort_values('loss', ascending=True))
-        return grouped_df
-
     def clean_death(self, df):
         df = df.dropna(subset=["ESTIMATE", "AGE", "YEAR"])
         return df
@@ -115,7 +109,7 @@ class GAMBLING_DEMOGRAPHICS_API:
 
         return filtered_df
 
-    def bin_loss(self, df, loss_column, n_bins):
+    def bin(self, df, loss_column, n_bins):
         bins = pd.cut(df[loss_column], bins=n_bins)
 
         # Bin lables that include loss
@@ -144,7 +138,7 @@ def main():
     cleaned_mental_df = demographics_api.clean_mental()
 
     normalized_df = demographics_api.remove_outliers(cleaned_gamble_df, 'loss')
-    sankey_df = demographics_api.bin_loss(normalized_df,'loss', 10)
+    sankey_df = demographics_api.bin(normalized_df,'loss', 10)
     threshold_gamble_count = demographics_api.filter_by_count(cleaned_gamble_df, "country_name", 1000)
     selected_year_deaths = select_data(cleaned_death_df, ["10-14 years", "All ages"])
 

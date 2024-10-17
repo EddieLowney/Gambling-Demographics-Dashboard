@@ -89,7 +89,7 @@ def make_sankey(df,threshold, title, *cols):
         ))])
     fig.update_layout(title_text=title,
                   font_size=10)
-    fig.show()
+    return fig
 
 def keep_rows(df, column, operator, comparison):
     # Function for cleaning dataframes, removing specified rows that are related by the operator
