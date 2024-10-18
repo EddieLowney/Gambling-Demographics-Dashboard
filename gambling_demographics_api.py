@@ -1,9 +1,9 @@
 '''
-Author: Eddie Lowney
+Author: Eddie Lowney and Nick Usich
 Section: Advanced Programming with Data Section 1
-Assignment:
-Date:
-Output:
+Assignment: HW3
+Date: 10/17/24
+Output: Functions for holoviz panel creation
 '''
 
 import pandas as pd

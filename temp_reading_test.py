@@ -1,3 +1,11 @@
+'''
+Author: Eddie Lowney and Nick Usich
+Section: Advanced Programming with Data Section 1
+Assignment: HW 3
+Date: 10/17/24
+Output: HoloViz panel with widgets and visualizations
+'''
+
 import panel as pn
 import pandas as pd
 from gambling_demographics_api import GAMBLING_DEMOGRAPHICS_API
@@ -80,7 +88,8 @@ def create_map(df, country, column, starting_spot, starting_zoom,
         # Converting to a dictionary
         avg_loss_dict = df_avg_loss.set_index(country)[column].to_dict()
 
-        # Merging average loss and geojson, used ChatGPT for help
+        # Merging average loss and geojson, used this and stackoverflow for help
+        # https://python-graph-gallery.com/map-read-geojson-with-python-geopandas/
         for feature in geo_data['features']:
             country_id = feature['id']
             avg_win = avg_loss_dict.get(country_id, None)
@@ -102,7 +111,8 @@ def create_map(df, country, column, starting_spot, starting_zoom,
         legend_name=legend_name
     ).add_to(m)
 
-    # Create style_function
+    # Create style_function, used this source for help
+    # https://medium.com/geekculture/three-ways-to-plot-choropleth-map-using-python-f53799a3e623
     style_function = lambda x: {
         'fillColor': '#ffffff',
         'color': '#000000',
@@ -112,7 +122,6 @@ def create_map(df, country, column, starting_spot, starting_zoom,
 
     # Create popup tooltip object, used this source for help:
     # https://medium.com/geekculture/three-ways-to-plot-choropleth-map-using-python-f53799a3e623
-
     tooltip = folium.features.GeoJson(
         geo_data,
         style_function=style_function,
@@ -122,7 +131,8 @@ def create_map(df, country, column, starting_spot, starting_zoom,
             )
         )
 
-    # Add tooltip object to the map
+    # Add tooltip object to the map, used this source for help
+    # https://medium.com/geekculture/three-ways-to-plot-choropleth-map-using-python-f53799a3e623
     m.add_child(tooltip)
     m.keep_in_front(tooltip)
     folium.LayerControl().add_to(m)
