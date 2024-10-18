@@ -131,7 +131,7 @@ def keep_rows(df, column, operator, comparison):
 def bin_loss(df, loss_column, n_bins):
     bins = pd.cut(df[loss_column], bins=n_bins)
 
-    # Bin lables that include loss
+    # Bin labels that include loss
     bin_edges = bins.cat.categories
     bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}"
                   for interval in bin_edges]
@@ -139,33 +139,6 @@ def bin_loss(df, loss_column, n_bins):
     # Assign the bin labels to the bins
     df['loss_bins'] = bins.cat.rename_categories(bin_labels)
     return df
-
-def bin_loss(df, loss_column, n_bins):
-    bins = pd.cut(df[loss_column], bins=n_bins)
-
-    # Bin lables that include loss
-    bin_edges = bins.cat.categories
-    bin_labels = [f"${int(interval.left):,} - ${int(interval.right):,}"
-                  for interval in bin_edges]
-
-    # Assign the bin labels to the bins
-    df['loss_bins'] = bins.cat.rename_categories(bin_labels)
-    return df
-
-def remove_outliers(df, column):
-    # Q1 and Q3
-    Q1 = df[column].quantile(0.25)
-    Q3 = df[column].quantile(0.75)
-    IQR = Q3 - Q1
-
-    # Add bounds
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-
-    # Filter out outliers
-    filtered_df = df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
-
-    return filtered_df
 
 def main():
     print("orange")
